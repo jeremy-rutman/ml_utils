@@ -7,6 +7,7 @@ from trendi import constants
 from trendi import Utils
 from trendi.downloaders import read_various_training_formats
 
+######WARNING compare_bb_dicts is a WIP########
 def compare_bb_dicts(gt_dict,guess_dict):
     '''
     given 2 dicts (in 'api form', see below of bbs - find bb in dict2 having most overlap for each bb in dict1 (assuming thats the gt)
