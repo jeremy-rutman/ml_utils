@@ -7,25 +7,36 @@ from trendi import constants
 from trendi import Utils
 from trendi.downloaders import read_various_training_formats
 
-######WARNING compare_bb_dicts is a WIP########
-def compare_bb_dicts(gt_dict,guess_dict):
+def compare_bb_dicts(gt_dict,guess_dict,dict_format={'data':'data','bbox':'bbox','object':'object'}):
     '''
-    given 2 dicts (in 'api form', see below of bbs - find bb in dict2 having most overlap for each bb in dict1 (assuming thats the gt)
-    if it exists, check if categories match . return n_matching cats and avg. iou. iou=0 if no box is overlapping , and extra detections (false pos)
-    also count for 0 iou
+    given 2 dicts of bbs - find bb in dict2 having most overlap for each bb in dict1 (assuming thats the gt)
+    if it exists, check if categories match, that counts as a true positive.
+    If there's no overlapping bb or the cat. is wrong thats a false negative.
+    iou counts for average even if category is wrong (check this against standards...!)
+    iou=0 if no guess box overlaps a gt box.
+    extra detections with no iou count as false pos, and contribute iou=0 to average
 
-    :param dict1:ground truth in 'api form' {'data': [{'confidence': None, 'object': 'bag', 'bbox': [454, 306, 512, 360]},...,]}
+    :param dict1:ground truth in 'api form' {'data': [{ 'object': 'bag', 'bbox': [454, 306, 512, 360]},...,]}
+            bbox here is xywh , aka x1 y1 w h , corrds are 'regular' image coords
+            (origin is top left, positive x goes right and pos y goes down)
     :param dict2:guess in 'api form'
-    :return:  n_true_positive, n_false_neg, n_false_pos, iou
+    :param dict_format - this lets you use dicts in different formats, just substitute whatver term is used into the dict e.g.
+        if the dict uses 'x_y_w_h' instead of 'bbox' and 'objects' instead of 'data' and 'label' instead of 'object' then
+        dict_format = {'data':'objects', 'bbox':'w_y_w_h','object:'label'}
+    :return:  n_true_positive, n_false_neg, n_false_pos, avg_iou
     '''
-    gt_data=gt_dict['data']
-    guess_data=guess_dict['data']
+    gt_data=gt_dict[dict_format['data']]
+    guess_data=guess_dict[dict_format['data']]
     true_pos = 0
     false_pos = 0
     false_neg = 0
+    #there are no true negatives here to speak of
     tot_objects = 0
     iou_tot = 0
     n = 0
+    obj = dict_format['object']
+    data = dict_format['data']
+    bb = dict_format['bbox']
     for gt_detection in gt_data:
         best_iou=0
         best_detection = None
@@ -33,17 +44,19 @@ def compare_bb_dicts(gt_dict,guess_dict):
             if 'already_matched' in guess_data:
                 print('already matched guess {}'.format(guess_detection))
                 continue
-            iou = Utils.intersectionOverUnion(gt_detection['bbox'],guess_detection['bbox'])
-            print('checking gt {} {} vs {} {}, iou {}'.format(gt_detection['bbox'],gt_detection['object'],
-                                                                            guess_detection['bbox'],guess_detection['object'],iou))
+            iou = Utils.intersectionOverUnion(gt_detection[bb],guess_detection[bb])
+            print('checking gt {} {} vs {} {}, iou {}'.format(gt_detection[bb],
+                                                            gt_detection[obj],
+                                                            guess_detection[bb],
+                                                            guess_detection[obj],iou))
             if iou>best_iou:
                 best_iou = iou
                 best_detection = guess_detection
         if best_detection is not None:
             best_detection['already_matched']=True #this gets put into original guess_detection
             gt_detection['already_matched']=True #this gets put into original guess_detection
-            if best_detection['object'] == gt_detection['object'] and best_iou > 0:
-                print('matching object {} in gt and guess, iou {}'.format(best_detection['object'],best_iou))
+            if best_detection[obj] == gt_detection[obj] and best_iou > 0:
+                print('matching object {} in gt and guess, iou {}'.format(best_detection[dict_format['object']],best_iou))
                 true_pos += 1
             else:
                 false_pos += 1
@@ -62,45 +75,36 @@ def compare_bb_dicts(gt_dict,guess_dict):
     iou_avg = iou_tot/n
     return {'tp':true_pos,'tn':false_pos,'fn':false_neg,'iou_avg':iou_avg}
 
-def multilabel_output_on_testfile(testfile=None,testdir=None,filter='.jpg',outdir='./',estimates_file='estimates.txt'):
-    if testfile is not None:
-        img_files = []
-        with open(testfile,'r') as fp:
-            lines = fp.readlines()
-            for line in lines:
-                imgfilename = line.split()[0]
-                img_files.append(imgfilename)
-    elif testdir is not None:
-        img_files = [os.path.join(testdir,f) for f in os.listdir(testdir) if filter in f]
-    n = len(img_files)
-    estimates=[]
-    i=0
-    for imgfile in img_files:
-        print('doing {} ({}/{})'.format(imgfile,i,n))
-        img_arr = cv2.imread(imgfile)
-        if img_arr is None:
-            logging.info('could not read '+str(imgfile))
-            estimates.append(None)
-            continue
-        ml_output=get_multilabel_output_using_nfc(img_arr)
-        print('ml output:'+str(ml_output))
-        mlfilename = os.path.basename(imgfile).replace('.jpg','_mloutput.txt')
-        mlfilename = os.path.join(outdir,mlfilename)
-        logging.info('mlfilename:'+str(mlfilename))
-        with(open(mlfilename,'a')) as fp:
-            for e in ml_output:
-                fp.write(str(round(e,3))+' ')
-            fp.write('\n')
-            fp.close()
-        estimates.append(ml_output)
-        i=i+1
+def test_compare_bb_dicts():
+    gt = {   "data" : [
+    { "object" : "Van",
+      "bbox" : [1428,466, 98, 113 ]     },
+    { "object" : "Private car",
+      "bbox" : [1306, 485, 83,64 ]     },
+    { "object" : "Private car",
+      "bbox" : [1095,453,103,68 ]     },
+    { "object" : "Private car",
+      "bbox" : [1204, 479, 96, 59 ]     },
+    { "object" : "Private car",
+      "bbox" : [1027, 458, 79, 42 ]     },
+    { "object" : "Private car",
+      "bbox" : [750, 864,586,158 ] }  ] }
 
-    with open(estimates_file,'a') as fp:
-        for imgfile,estimate in zip(img_files,estimates):
-            fp.write(imgfile+' ')
-            for e in estimate:
-                fp.write(str(round(e,3))+' ')
-            fp.write('\n')#
+    guess =  {   "data" : [
+    { "object" : "Van",
+      "bbox" : [1400,500, 70, 70 ]     },
+    { "object" : "Private car",
+      "bbox" : [1300, 385, 40,50 ]     },
+    { "object" : "Private car",
+      "bbox" : [100,453,103,68 ]     },
+    { "object" : "snmorgle",
+      "bbox" : [1100, 450, 100, 200 ]     },
+    { "object" : "Private car",
+      "bbox" : [1100, 300, 20, 50 ]     },
+    { "object" : "Private car",
+      "bbox" : [1050, 350, 30, 60 ]     },
+    { "object" : "Person",
+      "bbox" : [750, 864,586,158 ] }  ] }
 
 def precision_accuracy_recall(caffemodel,solverproto,outlayer='label',n_tests=100):
     #TODO dont use solver to get inferences , no need for solver for that
