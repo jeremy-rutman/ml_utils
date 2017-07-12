@@ -9,10 +9,9 @@ import random
 import inspect
 import copy
 
-from trendi.utils import imutils
-from trendi import constants
-from trendi import Utils
-from trendi.downloaders import read_various_training_formats
+from . import imutils
+from . import Utils
+from . import read_various_training_formats
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("simple_example")
