@@ -3,7 +3,7 @@ Some functions for supporting machine learning, generally and caffe-specific
 
 caffe - python layers for
 
-    image read (file or lmdb)
+    image read (file or lmdb) - single / multi label, pixel level labels
 
     on-the-fly augmentation
 
