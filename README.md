@@ -1,5 +1,5 @@
 # ml-support-code-in-python
-Some functions for supporting machine learning, generally and caffe-specific
+Some functions for supporting machine learning, generally and caffe-specific. Currently just a dump, ideally will clean up and add install.py, examples etc 
 
 caffe - python layers for
 
