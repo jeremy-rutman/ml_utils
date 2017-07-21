@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import multiprocessing
 
-__author__ = 'liorsabag'
+__author__ = 'liorsabag and jeremyrutman'
 import csv
 import gzip
 import json
