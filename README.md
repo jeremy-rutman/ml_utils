@@ -18,10 +18,17 @@ image processing
     acccuracy/precision/recall reporting for single label, multilabel , bounding box, and pixel level
 
     utilities e.g. read from anywhere (url/db/local file/img array)
+    
+    grabcut
 
 read/write various file formats
+
     lmdb, hd5
+
     yolo
+    
     deepfashion 
+
     tamara berg 
+    
     
