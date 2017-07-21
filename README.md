@@ -19,3 +19,9 @@ image processing
 
     utilities e.g. read from anywhere (url/db/local file/img array)
 
+read/write various file formats
+    lmdb, hd5
+    yolo
+    deepfashion 
+    tamara berg 
+    
