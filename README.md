@@ -31,4 +31,8 @@ read/write various file formats
 
     tamara berg 
     
+tagging tools
+
+    multilabel
     
+    pixel level
