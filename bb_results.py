@@ -4,6 +4,7 @@ import logging
 import msgpack
 import requests
 import pandas as pd
+import json
 
 CLASSIFIER_ADDRESS='1.2.3.4'
 
@@ -61,7 +62,7 @@ def bb_output_yolo_using_api(url_or_np_array,CLASSIFIER_ADDRESS,roi=None,get_or_
         print('didnt get data in result from {} on sendng {}'.format(CLASSIFIER_ADDRESS,data))
     return c
 
-def detect(img_arr, roi=[],CLASSIFIER_ADDRESS):
+def detect(img_arr, CLASSIFIER_ADDRESS,roi=[]):
     print('using addr '+str(CLASSIFIER_ADDRESS))
     data = {"image": img_arr}
     if roi:
