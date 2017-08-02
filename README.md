@@ -55,16 +55,3 @@ tagging tools
 * multilabel
     
 * pixel level
-
-
-A Sub-Section
--------------
-
-Numbered lists look like you'd expect:
-
-1. hi there
-
-2. must be going
-
-Urls are http://like.this and links can be
-written `like this <http://www.example.com/foo/bar>`_.
