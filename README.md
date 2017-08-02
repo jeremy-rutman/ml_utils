@@ -13,7 +13,7 @@ often looks like this::
 Some functions for supporting machine learning, generally and caffe-specific. Currently just a dump, ideally will clean up and add install.py, examples etc
 
 caffe - python layers for
-=========
+-------------------------
 * image read (file or lmdb) - single / multi label, pixel level labels
 
 * on-the-fly augmentation
@@ -23,7 +23,7 @@ caffe - python layers for
 * controlling and reporting acc/loss of solver with solver.step
 
 image processing
-=========
+----------------
 
 * image augmentation - including bounding boxes and pixel level
 
@@ -34,7 +34,7 @@ image processing
 * grabcut
 
 read/write various file formats
-=========
+-------------------------------
 
 * lmdb, hd5
 
@@ -50,7 +50,7 @@ read/write various file formats
 
 
 tagging tools
-=========
+-------------
 
 * multilabel
     
