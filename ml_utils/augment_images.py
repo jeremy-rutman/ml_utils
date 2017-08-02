@@ -6,11 +6,9 @@ import logging
 import time
 import string
 import random
-import inspect
 import copy
 
 from . import imutils
-from . import Utils
 from . import read_various_training_formats
 
 logging.basicConfig(level=logging.INFO)
@@ -509,10 +507,10 @@ def generate_image_onthefly(img_filename_or_nparray, gaussian_or_uniform_distrib
                 factor = float(crop_size[0]+2)/height #add 1 since rounding can cause output to be one pix too small
                 resize_size = (crop_size[0],int(width*factor))
             logging.warning('resizing {} to {} so as to accomodate crop to {}'.format(img_arr.shape[0:2],resize_size,crop_size))
-            img_arr=imutils.resize_keep_aspect(img_arr,output_size=resize_size,careful_with_the_labels=False) #img not labels
+            img_arr= imutils.resize_keep_aspect(img_arr,output_size=resize_size,careful_with_the_labels=False) #img not labels
             if(mask_arr is not None):
   #              print('uniques beffg '+str(np.unique(mask_arr)))
-                mask_arr=imutils.resize_keep_aspect(mask_arr,output_size=resize_size,careful_with_the_labels=True) #labels not img
+                mask_arr= imutils.resize_keep_aspect(mask_arr,output_size=resize_size,careful_with_the_labels=True) #labels not img
    #             print('uniques aft '+str(np.unique(mask_arr)))
 
         height,width = img_arr.shape[0:2]
