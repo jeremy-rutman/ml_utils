@@ -29,6 +29,7 @@ import inspect
 import string
 import random
 
+from . import constants
 #import background_removal
 #from trendi.paperdoll import neurodoll_falcon_client
 
