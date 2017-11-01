@@ -29,14 +29,11 @@ import inspect
 import string
 import random
 
-from trendi import background_removal
+#import background_removal
 from trendi.paperdoll import neurodoll_falcon_client
 
-os.environ['REDIS_HOST']='10'
-os.environ['MONGO_HOST']='10'
-os.environ['REDIS_PORT']='10'
-os.environ['MONGO_PORT']='10'
-from trendi import Utils
+
+#from trendi import Utils
 
 
 ######################
