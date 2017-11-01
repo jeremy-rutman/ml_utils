@@ -21,7 +21,7 @@ import numpy as np
 import multiprocessing
 import socket
 import copy
-from trendi import constants
+#from trendi import constants
 #import matplotlib.pyplot as plt
 #import matplotlib.patches as mpatches
 import subprocess
@@ -45,6 +45,12 @@ from trendi import Utils
 
 
 def intersectionOverUnion(r1, r2):
+    '''
+    r1,r2 in form xywh
+    :param r1:
+    :param r2:
+    :return:
+    '''
     # print(r1, r2)
 
     # a if test else b
@@ -67,6 +73,41 @@ def intersectionOverUnion(r1, r2):
     iou = float(intersectionarea) / float(totarea)
     print('totarea,intarea,iou:' + str(totarea) + ',' + str(intersectionarea) + ',' + str(iou))
     return (iou)
+
+def intersectionOverMinArea(r1,r2):
+    '''
+    r1,r2 in form xywh
+    :param r1:
+    :param r2:
+    :return:
+    '''
+
+    intersectionx = int(max(r1[0], r2[0]))
+    intersectiony = int(max(r1[1], r2[1]))
+    intersectionw = int(min(r1[0] + r1[2], r2[0] + r2[2])) - int(intersectionx)
+    if intersectionw < 0:
+        intersectionw = 0
+    intersectionh = int(min(r1[1] + r1[3], r2[1] + r2[3])) - int(intersectiony)
+    if intersectionh < 0:
+        intersectionh = 0
+        # intersectionh -= intersectiony;
+        # print('r1:' + str(r1) + ' r2:' + str(r2) + ' x,y,w,h:' + str(intersectionx) + ',' + str(intersectiony) + ',' + str(
+        # intersectionw) + ',' + str(
+        # intersectionh))
+    min_area=min(r1[2]*r1[3],r2[2]*r2[3])
+    intersectionarea = intersectionw * intersectionh
+    frac = float(intersectionarea) / float(min_area)
+    print('min_area,intarea,frac:' + str(min_area) + ',' + str(intersectionarea) + ',' + str(frac))
+    return (frac)
+
+def combine_bbs(bb1_xywh,bb2_xywh):
+    minx=min(bb1_xywh[0],bb2_xywh[0])
+    maxx=max(bb1_xywh[0]+bb1_xywh[2],bb2_xywh[0]+bb2_xywh[2])
+    miny=min(bb1_xywh[1],bb2_xywh[1])
+    maxy=min(bb1_xywh[1]+bb1_xywh[3],bb2_xywh[1]+bb2_xywh[3])
+    w=maxx-minx
+    h=maxy-miny
+    return(minx,miny,w,h)
 
 
 def get_person_bb_from_face(face, image_shape):
@@ -2529,8 +2570,20 @@ def count_values(mask,labels=None):
         pixelcounts[unique]=pixelcount
     return pixelcounts
 
-host = socket.gethostname()
-# print('host:'+str(host))
+def get_median_image(img_arr_list,visual_output=True):
+    ''''
+    given list of image arrs, produce median image useful for bg subtraction
+    '''
+    np_images = np.array(img_arr_list)
+    print('np size:'+str(np_images.shape))
+    median_image = np.median(np_images,axis=0) #get median pixel across images
+    print('type:'+str(type(median_image)))
+    median_image = np.array(median_image,dtype=np.uint8)
+    print('median size:'+str(median_image.shape))
+    if visual_output:
+        cv2.imshow('median',median_image)
+        k=cv2.waitKey(0)
+    return median_image
 
 if __name__ == "__main__":
     img=cv2.imread('../images/female1.jpg')
