@@ -8,8 +8,8 @@ import string
 import random
 import copy
 
-from . import imutils
-from . import read_various_training_formats
+import imutils
+import read_various_training_formats
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("simple_example")
