@@ -30,7 +30,7 @@ import string
 import random
 
 #import background_removal
-from trendi.paperdoll import neurodoll_falcon_client
+#from trendi.paperdoll import neurodoll_falcon_client
 
 
 #from trendi import Utils
