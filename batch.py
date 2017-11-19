@@ -3,7 +3,7 @@ __author__ = 'jeremy'
 import os
 import logging
 logging.basicConfig(level=logging.INFO)  #debug is actually lower than info: critical/error/warning/info/debug
-
+import random
 
 class load_batch():
     '''
@@ -40,14 +40,14 @@ class load_batch():
         if not os.path.exists(testfilename):
             self.split_to_trainfile_and_testfile()
 
-    def read_dirs_write_train_testfiles(self):
+    def read_dirs(self):
         self.datafile_labelfile_pairs=[]
         label_files = [os.path.join(self.label_dir,f) for f in os.listdir(self.label_dir) if self.label_suffix in f ]
         for l in label_files:
             datafile_name=os.path.basename(l).replace(self.label_suffix,self.data_suffix)
             datafile_name=os.path.join(self.data_dir_test,datafile_name)
             if os.path.exists(datafile_name):
-                self.datafile_labelfile_pairs.append({'data':datafile_name,'label':l})
+                self.datafile_labelfile_pairs.append({'datafile':datafile_name,'labelfile':l})
             else:
                 print('couldnt find datafile {} corresponding to labelfile {}'.format(datafile_name,l))
 
@@ -91,7 +91,7 @@ class load_batch():
 
         return(data)
 
-    def split_to_trainfile_and_testfile(filename=None, fraction=0.05,shuffle=True):
+    def split_to_trainfile_and_testfile(self,filename=None, fraction=0.05,shuffle=True):
         '''
         writes (destructively) files with _train.txt and _test.txt based on filename, with sizes determined by fraction
         :param filename: input catsfile
@@ -105,20 +105,28 @@ class load_batch():
                     logging.warning('nothing in {}'.format(filename))
                     return
                 print('file {} has lines like {}'.format(filename,lines[0]))
-                if shuffle:
-                    random.shuffle(lines)
-            n_lines = len(lines)
-            train_lines = lines[0:int(n_lines*(1-fraction))]
-            test_lines = lines[int(n_lines*(1-fraction)):]
-            train_name = filename[0:-4] + '_train.txt'
-            test_name = filename[0:-4] + '_test.txt'
-            print('{} files written to {} and {} files written to {}'.format(len(train_lines),train_name,len(test_lines),test_name))
-            with open(train_name,'w') as trfp:
-                trfp.writelines(train_lines)
-                trfp.close()
-            with open(test_name,'w') as tefp:
-                tefp.writelines(test_lines)
-                tefp.close()
-        #report how many in each class
-            inspect_single_label_textfile(filename = train_name,visual_output=False,randomize=False)
-            inspect_single_label_textfile(filename = test_name,visual_output=False,randomize=False)
+            self.datafile_labelfile_pairs = None
+            for line in lines:
+                datafile,labelfile=line.split()
+                self.datafile_labelfile_pairs.append({'datafile':datafile,'labelfile':labelfile})
+        else:
+            filename = os.path.join(self.label_dir,'train.txt')
+        if shuffle:
+            random.shuffle(self.datafile_labelfile_pairs)
+
+
+        n_lines = len(self.datafile_labelfile_pairs)
+        train_lines = lines[0:int(n_lines*(1-fraction))]
+        test_lines = lines[int(n_lines*(1-fraction)):]
+        train_name = filename[0:-4] + '_train.txt'
+        test_name = filename[0:-4] + '_test.txt'
+        print('{} files written to {} and {} files written to {}'.format(len(train_lines),train_name,len(test_lines),test_name))
+        with open(train_name,'w') as trfp:
+            trfp.writelines(train_lines)
+            trfp.close()
+        with open(test_name,'w') as tefp:
+            tefp.writelines(test_lines)
+            tefp.close()
+    #report how many in each class
+        inspect_single_label_textfile(filename = train_name,visual_output=False,randomize=False)
+        inspect_single_label_textfile(filename = test_name,visual_output=False,randomize=False)
