@@ -29,7 +29,7 @@ import inspect
 import string
 import random
 
-from . import constants
+import constants
 #import background_removal
 #from trendi.paperdoll import neurodoll_falcon_client
 
@@ -2581,6 +2581,45 @@ def get_median_image(img_arr_list,visual_output=True):
         cv2.imshow('median',median_image)
         k=cv2.waitKey(0)
     return median_image
+
+
+def test_median_image():
+    dir = '/home/jeremy/PycharmProjects/snooker/'
+    files = [file for file in os.listdir(dir) if '.jpg' in file]
+    files = sorted(files)
+ #   build  image array
+    img_arr_list =[]
+    for file in files:
+        path = os.path.join(dir,file)
+        img_arr = cv2.imread(path)
+        img_arr_list.append(img_arr)
+
+    med_img = get_median_image(img_arr_list)
+    cv2.imwrite(os.path.join(dir,'median.bmp'),med_img)
+
+    med_img = cv2.imread(os.path.join(dir, 'median2.bmp'))
+    height, width, channels = med_img.shape
+
+    outfile = os.path.join(dir, 'out.mp4')
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  # Be sure to use lower case
+    out = cv2.VideoWriter(outfile, fourcc, 20.0, (width, height))
+
+    import time
+    start = time.time()
+    for file in files:
+        path = os.path.join(dir, file)
+        img_arr = cv2.imread(path)
+        diff = cv2.subtract(img_arr, med_img)
+        # cv2.imshow('diff',diff)
+        # cv2.waitKey(10)
+        print('ok1')
+        out.write(diff)  # Write out frame to video
+        print('ok2')
+
+    elapsed = time.time() - start
+    print(
+        'elapsed {} n {} tpi {} ipt {} '.format(elapsed, len(files), elapsed / len(files), float(len(files)) / elapsed))
 
 def clahe_rgb(img_arr):
     #-----Converting image to LAB Color model-----------------------------------
