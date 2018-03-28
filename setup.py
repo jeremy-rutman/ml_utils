@@ -12,9 +12,8 @@ from os import path
 here = path.abspath(path.dirname(__file__))
 
 
-
 setup(
-    name='ml_utils',
+    name='nn_utils',
     version='0.1.0',
     author='Jeremy Rutman',
     author_email='jeremy.rutman@gmail.com',
