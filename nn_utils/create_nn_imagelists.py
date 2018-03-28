@@ -8,17 +8,19 @@ import sys
 from shutil import copyfile
 import json
 import shutil
-import pymongo
+# import pymongo
 import itertools
 
 logging.basicConfig(level=logging.INFO)
 from PIL import Image
 
-from trendi import constants
-from trendi.utils import imutils
-from trendi import Utils
-from trendi.yonatan import yonatan_constants
-from trendi.features import config
+# from trendi import constants
+from nn_utils import constants
+# from trendi.utils import imutils
+# from trendi import Utils
+# from trendi.yonatan import yonatan_constants
+# from trendi.features import config
+import sysutils
 
 def verify_files_in_list_exist(filelist):
     if not os.path.exists(filelist):
@@ -169,7 +171,9 @@ def consistency_check_multilabel_db(in_docker=True):
     print('all_items_dict:' + str(all_items_dict))
     print('consistent:'+str(consistent)+' n_con:'+str(n_consistent)+' incon:'+str(n_inconsistent))
 
-def tg_positives(folderpath='/data/jeremy/image_dbs/tg/google',path_filter='kept',allcats=constants.flat_hydra_cats,outsuffix='pos_tg.txt'):
+
+
+def tg_positives(folderpath='/data/jeremy/image_dbs/tg/google',path_filter='kept',allcats=None,outsuffix='pos_tg.txt'):
     '''
     take the tg positives for all cats and put into labelfiles
     :param folderpath:
@@ -189,7 +193,7 @@ def tg_positives(folderpath='/data/jeremy/image_dbs/tg/google',path_filter='kept
             path_antifilter = ['nonbikini']
         dir_to_labelfile(folderpath,class_number,outfile=outfile,filefilter='.jpg',path_filter=all_filters,path_antifilter=path_antifilter,recursive=True)
 
-def binary_pos_and_neg_deepfashion_and_mongo(allcats=constants.flat_hydra_cats,outfile='pos_neg_mongo_df.txt'):
+def binary_pos_and_neg_deepfashion_and_mongo(allcats=None,outfile='pos_neg_mongo_df.txt'):
     '''
     #1. tamarab berg - generates pos and neg per class
         assume this is already done e.g. using   binary_pos_and_neg_from_multilabel_db
@@ -225,7 +229,7 @@ def binary_pos_and_neg_deepfashion_and_mongo(allcats=constants.flat_hydra_cats,o
                 fp.write(str(negative)+'\t0\n')
         raw_input('ret to cont')
 
-def binary_pos_and_neg_using_neglogic_onecat(cat,dirs_and_cats,allcats=constants.flat_hydra_cats,folderpath='/data/jeremy/image_dbs/mongo',outfile=None):
+def binary_pos_and_neg_using_neglogic_onecat(cat,dirs_and_cats,allcats=None,folderpath='/data/jeremy/image_dbs/mongo',outfile=None):
     '''
     given a category and list of directories with a known cat per dir , use constants.bad_negs_for_pos to determine what cant be used as negs
     for the cat - generate negs using everything else not in bad_negs, generate pos using the cat , write to file and return lists
@@ -319,7 +323,7 @@ def binary_pos_and_neg_using_neglogic_onecat(cat,dirs_and_cats,allcats=constants
                 fp.write(str(negative)+'\t0\n')
     return positives, negatives
 
-def dir_of_dirs_to_tg_hydra(folderpath='/data/jeremy/image_dbs/mongo',cats=constants.flat_hydra_cats,filefilter=None):
+def dir_of_dirs_to_tg_hydra(folderpath='/data/jeremy/image_dbs/mongo',cats=None,filefilter=None):
     '''
     the mongo dbs are downloaded as a folder per db, with subfolders for the categories
     :param folderpath:
@@ -355,7 +359,7 @@ def dir_of_dirs_to_tg_hydra(folderpath='/data/jeremy/image_dbs/mongo',cats=const
 #    print cats_and_dirs
     return cats_and_dirs
 
-def os_walk_to_tg_hydra(folderpath='/data/jeremy/image_dbs/mongo',cats=constants.flat_hydra_cats,recursive=True,filefilter=None):
+def os_walk_to_tg_hydra(folderpath='/data/jeremy/image_dbs/mongo',cats=None,recursive=True,filefilter=None):
     '''
     the mongo dbs are downloaded as a folder per db, with subfolders for the categories
     :param folderpath:
@@ -594,7 +598,7 @@ def all_positives_from_multilabel_db(image_dir='/data/jeremy/image_dbs/tamara_be
     print('tot positives:'+str(n_positives))
     return positives_list
 
-def analyze_negs_filipino_db(labels=constants.multilabel_categories_v2,in_docker=True):
+def analyze_negs_filipino_db(labels=None,in_docker=True):
     '''
     TODO - finish this and verify that constants.bad_negs_for_pos is consistent with this info
     namely this function should return what items occur togethe and with what frequency
@@ -665,7 +669,8 @@ def positives_from_tbdb_for_hydra_cats():
             one_class_positives_from_multilabel_db(desired_cat=cat,desired_index=index)
             index += 1
 
-def create_class_a_vs_class_b_file_from_multilabel_db(index_a,index_b,image_dir='/data/jeremy/image_dbs/tamara_berg_street_to_shop/photos',outfile=None,labels=constants.web_tool_categories_v2,skip_missing_files=False):
+def create_class_a_vs_class_b_file_from_multilabel_db(index_a,index_b,image_dir='/data/jeremy/image_dbs/tamara_berg_street_to_shop/photos',
+                                                      outfile=None,labels=None,skip_missing_files=False):
     '''
     read multilabel db.
     if n_votes[cat] = 0 put that image in negatives for cat.
@@ -830,7 +835,6 @@ def dir_to_labelfile(dir,class_number,outfile=None,filefilter='.jpg',path_filter
     print(str(i)+' images written to '+outfile+' with label '+str(class_number))
     print('')
     return allfiles
-
 
 def copy_negatives(filename = 'tb_cats_from_webtool.txt',outfile =  None):
     '''
@@ -1086,6 +1090,59 @@ def inspect_single_label_textfile(filename = 'tb_cats_from_webtool.txt',visual_o
                     print('KEEPING moving {} to {}'.format(mask_filename,dest_dir))
                     shutil.move(mask_filename,dest_dir)
 
+def inspect_xml_textfile(filename='tb_cats_from_webtool.txt', visual_output=False, randomize=False, cut_the_crap=False):
+    '''
+    WIP - read xml
+    show bbs on img
+    :param visual_output:
+    :param randomize:
+    :param cut_the_crap:
+    :return:
+    file lines are of the form /path/to/file.jpg /path/to/xml
+    :param filename:
+    :return:
+    '''
+
+    n_instances = {}
+    with open(filename, 'r') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            path1 = line.split()[0]
+            try:
+                cat = int(line.split()[1])
+                if cat in n_instances:
+                    n_instances[cat] += 1
+                else:
+                    n_instances[cat] = 1
+            except:
+                print('lines maybe have no class?')
+                print(line)
+                return
+        fp.close()
+
+    print('n_instances {}'.format(n_instances))
+    if randomize:
+        random.shuffle(lines)
+    if n_instances == {}:
+        return
+    n = 0
+    cats_used = [k for k, v in n_instances.iteritems()]
+    n_cats = np.max(cats_used) + 1  # 0 is generally a cat so add 1 to get max
+    n_encountered = [0] * n_cats
+    for line in lines:
+        n = n + 1
+        print line
+        path = line.split()[0]
+        cat = int(line.split()[1])
+        n_encountered[cat] += 1
+        print(str(n) + ' images seen, totals:' + str(n_encountered))
+        #            im = Image.open(path)
+        #            im.show()
+        img_arr = cv2.imread(path)
+        if img_arr is None:
+            logging.warning('could not read ' + str(path))
+            continue
+        imutils.resize_to_max_sidelength(img_arr, max_sidelength=250, use_visual_output=True)
 
 def split_to_trainfile_and_testfile(filename='tb_cats_from_webtool.txt', fraction=0.05,shuffle=True,inspect=False,overwrite=True):
     '''
@@ -1122,7 +1179,6 @@ def split_to_trainfile_and_testfile(filename='tb_cats_from_webtool.txt', fractio
         if inspect:
             inspect_single_label_textfile(filename = train_name,visual_output=False,randomize=False)
             inspect_single_label_textfile(filename = test_name,visual_output=False,randomize=False)
-
 
 def balance_cats(filename='tb_cats_from_webtool.txt', ratio_neg_pos=1.0,n_cats=2,outfilename=None,shuffle=True):
     '''
@@ -1697,7 +1753,8 @@ def create_list_xml(image_dir,output_file=None,split_test_train=True,split_ratio
     img_files = [f for f in os.listdir(image_dir) if (f[-4:].lower()) in image_suffix or f[-5:].lower() in image_suffix]
  #   lbl_files = [f for f in os.listdir(label_dir) if (f[-4:].lower()) in label_suffix or f[-5:].lower() in label_suffix]
     if output_file == None:
-        output_file='labels'
+        parent_of_imagedir = sysutils.parent_dir(image_dir)
+        output_file=os.path.join(parent_of_imagedir,'labels')
 
     mode = 'a'
     if wipe_file:
@@ -1730,14 +1787,15 @@ def create_list_xml(image_dir,output_file=None,split_test_train=True,split_ratio
 
 if __name__ == "__main__": #
 
+    create_list_xml('/home/jeremy/Dropbox_variant/Dropbox/Emotion/Face, gender and emotion/1 - Dec')
     dir = '/home/jeremy/projects/core/'
     iamge_dir = 'images'
     annotation_dir='images'
-    from trendi.downloaders import read_various_training_formats
-    read_various_training_formats.inspect_yolo_annotations(dir='/home/jeremy/projects/core/',
-                             yolo_annotation_folder='images',img_folder='images',manual_verification=False,
-                             annotation_filter='_yololabels.txt')
-
+#    from trendi.downloaders import read_various_training_formats
+#     read_various_training_formats.inspect_yolo_annotations(dir='/home/jeremy/projects/core/',
+#                              yolo_annotation_folder='images',img_folder='images',manual_verification=False,
+#                              annotation_filter='_yololabels.txt')
+#
 
 #    write_cats_from_db_to_textfile()
 #    split_to_trainfile_and_testfile()
@@ -1801,10 +1859,9 @@ if __name__ == "__main__": #
 #    generate_deep_fashion_hydra_labelfiles()
 #    negatives_for_hydra()
 
-    binary_pos_and_neg_deepfashion_onecat('dress')
+    #binary_pos_and_neg_deepfashion_onecat('dress')
 
         #useful script - change all photos to photos_250x250
-    create_list_xml('/home/jeremy/Dropbox_variant/Dropbox/Emotion/Face, gender and emotion/1 - Dec')
 
 #!/usr/bin/env bash
 #echo $1

@@ -1086,6 +1086,60 @@ def inspect_single_label_textfile(filename = 'tb_cats_from_webtool.txt',visual_o
                     print('KEEPING moving {} to {}'.format(mask_filename,dest_dir))
                     shutil.move(mask_filename,dest_dir)
 
+def inspect_xml_textfile(filename = 'tb_cats_from_webtool.txt',visual_output=False,randomize=False,cut_the_crap=False):
+    '''
+    WIP - read xml
+    show bbs on img
+    :param visual_output:
+    :param randomize:
+    :param cut_the_crap:
+    :return:
+    file lines are of the form /path/to/file.jpg /path/to/xml
+    :param filename:
+    :return:
+    '''
+
+    n_instances = {}
+    with open(filename,'r') as fp:
+        lines = fp.readlines()
+        for line in lines:
+            path1 = line.split()[0]
+            try:
+                cat = int(line.split()[1])
+                if cat in n_instances:
+                    n_instances[cat]+=1
+                else:
+                    n_instances[cat] = 1
+            except:
+                print('lines maybe have no class?')
+                print(line)
+                return
+        fp.close()
+
+    print('n_instances {}'.format(n_instances))
+    if randomize:
+        random.shuffle(lines)
+    if n_instances == {}:
+        return
+    n = 0
+    cats_used = [k for k,v in n_instances.iteritems()]
+    n_cats = np.max(cats_used) + 1 # 0 is generally a cat so add 1 to get max
+    n_encountered = [0]*n_cats
+        for line in lines:
+            n = n + 1
+            print line
+            path = line.split()[0]
+            cat = int(line.split()[1])
+            n_encountered[cat]+=1
+            print(str(n)+' images seen, totals:'+str(n_encountered))
+    #            im = Image.open(path)
+    #            im.show()
+            img_arr = cv2.imread(path)
+            if img_arr is None:
+                logging.warning('could not read '+str(path))
+                continue
+            imutils.resize_to_max_sidelength(img_arr, max_sidelength=250,use_visual_output=True)
+
 def split_to_trainfile_and_testfile(filename='tb_cats_from_webtool.txt', fraction=0.05,shuffle=True,inspect=False):
     '''
     writes (destructively) files with _train.txt and _test.txt based on filename, with sizes determined by fraction

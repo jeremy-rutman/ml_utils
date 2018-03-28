@@ -7,13 +7,9 @@ import csv
 import gzip
 import json
 import requests
-from cv2 import imdecode, imwrite
 import logging
 import os
-from requests import ConnectionError
-import time
 import numpy as np
-from bson import objectid
 import math
 import cv2
 import re
@@ -22,7 +18,7 @@ import sys
 import hashlib
 logging.basicConfig(level=logging.WARNING)
 USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.103 Safari/537.36'
-db = constants.db
+#db = constants.db
 
 
 def format_filename(s):
@@ -417,7 +413,7 @@ def flatten_list(l):
             flatlist.append(sublist)
     return flatlist
 
-def give_me_a_list_of_synonyms(category,synonym_lists=constants.synonymous_cats):
+def give_me_a_list_of_synonyms(category,synonym_lists=None):
     '''
     this takes a synonymlist of list and returns the relevant list if any
     synonym list is
