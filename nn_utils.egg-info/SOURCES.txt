@@ -3,7 +3,6 @@ MANIFEST.in
 README.md
 setup.cfg
 setup.py
-nn_utils/Utils.py
 nn_utils/__init__.py
 nn_utils/augment_images.py
 nn_utils/batch.py
@@ -15,7 +14,7 @@ nn_utils/caffemodel_to_json.py
 nn_utils/constants.py
 nn_utils/conversion_utils.py
 nn_utils/cpu_count.py
-nn_utils/create_nn_imagelsts.py
+nn_utils/create_nn_imagelists.py
 nn_utils/darknet_convert.py
 nn_utils/fcn_pixlevel_output_converter.py
 nn_utils/hsv_util.py
@@ -26,6 +25,7 @@ nn_utils/multilabel_accuracy.py
 nn_utils/progress_plot.py
 nn_utils/read_various_training_formats.py
 nn_utils/solve_jr.py
+nn_utils/sysutils.py
 nn_utils/tensorflow_tests.py
 nn_utils/track.py
 nn_utils.egg-info/PKG-INFO

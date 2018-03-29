@@ -1,7 +1,14 @@
 __author__ = 'jeremy'
+
 '''
 https://packaging.python.org/en/latest/distributing.html
 https://github.com/pypa/sampleproject
+
+to upload to  PYPI on web
+python setup.py sdist
+python setup.py bdist_wheel --universal
+twine upload dist/*
+jr geese
 '''
 
 from setuptools import setup, find_packages
@@ -14,7 +21,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name='nn_utils',
-    version='0.1.0',
+    version='0.1.1',
     author='Jeremy Rutman',
     author_email='jeremy.rutman@gmail.com',
 #    packages=['ml_utils', 'ml_utils.test'],

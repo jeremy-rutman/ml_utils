@@ -2586,7 +2586,7 @@ def test_median_image():
  #   build  image array
     img_arr_list =[]
     # for file in files:
-    #     path = os.path.join(dir,file)
+     #     path = os.path.join(dir,file)
     #     img_arr = cv2.imread(path)
     #     img_arr_list.append(img_arr)
     #
