@@ -1156,7 +1156,7 @@ def split_to_trainfile_and_testfile(filename='tb_cats_from_webtool.txt', fractio
         if lines == []:
             logging.warning('nothing in {}'.format(filename))
             return
-        print('file {} has lines like {}'.format(filename,lines[0]))
+        print('file {} has lines like:\n{}'.format(filename,lines[0]))
         if shuffle:
             random.shuffle(lines)
         n_lines = len(lines)
@@ -1179,6 +1179,8 @@ def split_to_trainfile_and_testfile(filename='tb_cats_from_webtool.txt', fractio
         if inspect:
             inspect_single_label_textfile(filename = train_name,visual_output=False,randomize=False)
             inspect_single_label_textfile(filename = test_name,visual_output=False,randomize=False)
+        return({'trainfile':train_name,'testfile':test_name})
+
 
 def balance_cats(filename='tb_cats_from_webtool.txt', ratio_neg_pos=1.0,n_cats=2,outfilename=None,shuffle=True):
     '''
@@ -1281,6 +1283,128 @@ def textfile_for_pixlevel_kaggle(imagesdir,labelsdir=None,imagefilter='.tif',lab
             line = imagefile +' '+ labelfile
             print('writing: '+line)
             fp.write(line+'\n')
+
+def textfile_for_bboxes(image_dir,output_file=None,sizes_file=None,split_test_train=True,split_ratio=0.05,label_dir=None,format='caffe_xml',
+                    image_suffix=('.jpg','.jpeg','.gif','.png'),label_suffix='.xml',wipe_file=True,skip_if_file_doesnt_exist=False):
+    '''
+    create_list.sh makes test,train list of files with lines like :
+    VOC2007/JPEGImages/009943.jpg VOC2007/Annotations/009943.xml
+    and another file with image sizes with lines like
+    file_stem_no_jpg_suffix 375 500
+    this func comes instead of that
+    suitable for training caffe/tf ssd models
+    :param image_dir:
+    :param label_file:
+    :param split_test_train:
+    :param split_ratio:
+    :param label_dir:
+    :param format:
+    :param image_suffix:
+    :param label_suffix:
+    :param wipe_file:
+    :return:
+    '''
+
+    if image_dir == None or image_dir =='':
+        print('got no image dir')
+        return
+    if label_dir == None:
+        label_dir=image_dir
+    img_files = [f for f in os.listdir(image_dir) if (f[-4:].lower()) in image_suffix or f[-5:].lower() in image_suffix]
+ #   lbl_files = [f for f in os.listdir(label_dir) if (f[-4:].lower()) in label_suffix or f[-5:].lower() in label_suffix]
+    parent_of_imagedir = sysutils.parent_dir(image_dir)
+    if output_file == None:
+        output_file=os.path.join(parent_of_imagedir,'labels')
+    train_sizes_file=os.path.join(parent_of_imagedir,'train_name_size.txt')
+    test_sizes_file=os.path.join(parent_of_imagedir,'test_name_size.txt')
+
+    mode = 'a'
+    if wipe_file:
+        mode='w'
+    with open(output_file,mode) as fp:
+        for img_file in img_files:
+            orig_img_name = img_file
+            for suffix in image_suffix:
+                img_file = img_file.replace(suffix,'')
+            lbl_file = img_file+label_suffix
+            img_path = os.path.join(image_dir,orig_img_name)
+            lbl_path = os.path.join(label_dir,lbl_file)
+
+            if not os.path.exists(img_path):
+                print('warning - {} does not exist'.format(img_path))
+                if skip_if_file_doesnt_exist:
+                    continue
+            if not os.path.exists(lbl_path):
+                print('warning - {} does not exist'.format(img_path))
+                if skip_if_file_doesnt_exist:
+                    continue
+            lbl_path = os.path.join(label_dir,lbl_file)
+            line = img_path + ' '+ lbl_path+'\n'
+            print('writing line {}'.format(line))
+            fp.write(line)
+
+    if split_test_train: #split orig file and generate sizes files
+        names = split_to_trainfile_and_testfile(output_file)
+        test_size_name = os.path.join(parent_of_imagedir,'test_name_size.txt')
+        make_sizes_file(names['trainfile'],test_size_name)
+        train_size_name = os.path.join(parent_of_imagedir, 'train_name_size.txt')
+        make_sizes_file(names['testfile'], train_size_name)
+    else: #just generate sizes file
+        out_name = os.path.join(parent_of_imagedir, 'name_size.txt')
+        make_sizes_file(output_file,out_name)
+
+def make_sizes_file(file_list_file,output_file,image_suffix=('.jpg','.jpeg','.gif','.png'),wipe_file=True):
+    '''
+    generate list of image names (without suffix) and image sizes for use in ssd with lines like
+    file_stem_no_jpg_suffix 375 500
+    :param file_list_file: file containing list of img filenames
+    :param output_file: write results here
+    :return:
+    '''
+    if not os.path.exists(file_list_file):
+        print('{} does not exist, returning'.format(file_list_file))
+        return
+    lines=[]
+    with open(file_list_file,'r') as fp:
+        lines = fp.readlines()
+    if not(lines):
+        print('prob with file {} - no lines found'.format(file_list_file))
+    print('generating sizes file {} from list {} with {} lines'.format(output_file,file_list_file,len(lines)))
+    mode = 'a'
+    if wipe_file:
+        mode = 'w'
+    n_lines = 0
+    heights = []
+    widths = []
+    with open(output_file, mode) as fp2:
+        for line in lines:
+            img_file,lbl_file = line.split()[0:2]
+            if len(line.split())>2:
+                print('warning: line has more than 1 space')
+                print(line)
+            #strip suffixes off image file
+            if not os.path.exists(img_file):
+                print('warning - image file {} not found'.format(img_file))
+                continue
+            img_arr=cv2.imread(img_file)
+            if img_arr is None:
+                logging.warning('got None img arr for {}'.format(img_file))
+                continue
+            h,w = img_arr.shape[0:2]
+            if h==0 or w==0:
+                logging.warning('height or width = 0')
+                continue
+            for suffix in image_suffix:
+                img_file = img_file.replace(suffix,'')
+            line_to_write = img_file+' '+str(w)+' '+str(h)+'\n'
+            n_lines+=1
+            heights.append(h)
+            widths.append(w)
+            fp2.write(line_to_write)
+
+    avg_w = np.mean(np.array(widths))
+    avg_h = np.mean(np.array(heights))
+    print('{} lines written to {}, avg w {} h {}'.format(n_lines,output_file,avg_w,avg_h))
 
 def deepfashion_folder_to_cat(dir_to_cat,dir):
     for tup in dir_to_cat:
@@ -1726,71 +1850,15 @@ def negatives_for_hydra(web_prefix='https://tg-training.storage.googleapis.com',
             cats_i += 1
         #raw_input('ret to cont')
 
-def create_list_xml(image_dir,output_file=None,split_test_train=True,split_ratio=0.05,label_dir=None,format='caffe_xml',
-                    image_suffix=('.jpg','.jpeg','.gif','.png'),label_suffix='.xml',wipe_file=False,skip_if_file_doesnt_exist=False):
-    '''
-    create_list.sh makes test,train list of files with lines like :
-    VOC2007/JPEGImages/009943.jpg VOC2007/Annotations/009943.xml
-    this func comes instead of that
-    suitable for training caffe/tf ssd models
-    :param image_dir:
-    :param label_file:
-    :param split_test_train:
-    :param split_ratio:
-    :param label_dir:
-    :param format:
-    :param image_suffix:
-    :param label_suffix:
-    :param wipe_file:
-    :return:
-    '''
-
-    if image_dir == None or image_dir =='':
-        print('got no image dir')
-        return
-    if label_dir == None:
-        label_dir=image_dir
-    img_files = [f for f in os.listdir(image_dir) if (f[-4:].lower()) in image_suffix or f[-5:].lower() in image_suffix]
- #   lbl_files = [f for f in os.listdir(label_dir) if (f[-4:].lower()) in label_suffix or f[-5:].lower() in label_suffix]
-    if output_file == None:
-        parent_of_imagedir = sysutils.parent_dir(image_dir)
-        output_file=os.path.join(parent_of_imagedir,'labels')
-
-    mode = 'a'
-    if wipe_file:
-        mode='w'
-    with open(output_file,mode) as fp:
-        for img_file in img_files:
-            orig_img_name = img_file
-            for suffix in image_suffix:
-                img_file = img_file.replace(suffix,'')
-            lbl_file = img_file+label_suffix
-            img_path = os.path.join(image_dir,orig_img_name)
-            lbl_path = os.path.join(label_dir,lbl_file)
-
-            if not os.path.exists(img_path):
-                print('warning - {} does not exist'.format(img_path))
-                if skip_if_file_doesnt_exist:
-                    continue
-            if not os.path.exists(lbl_path):
-                print('warning - {} does not exist'.format(img_path))
-                if skip_if_file_doesnt_exist:
-                    continue
-            lbl_path = os.path.join(label_dir,lbl_file)
-            line = img_path + ' '+ lbl_path+'\n'
-            print('writing line {}'.format(line))
-            fp.write(line)
-
-    if split_test_train:
-        split_to_trainfile_and_testfile(output_file)
 
 
 if __name__ == "__main__": #
+    textfile_for_bboxes('/home/jeremy/Dropbox_variant/Dropbox/Emotion/Face_gender_and_emotion/1_Dec')
 
-    create_list_xml('/home/jeremy/Dropbox_variant/Dropbox/Emotion/Face, gender and emotion/1 - Dec')
-    dir = '/home/jeremy/projects/core/'
-    iamge_dir = 'images'
-    annotation_dir='images'
+
+    # dir = '/home/jeremy/projects/core/'
+    # image_dir = 'images'
+    # annotation_dir='images'
 #    from trendi.downloaders import read_various_training_formats
 #     read_various_training_formats.inspect_yolo_annotations(dir='/home/jeremy/projects/core/',
 #                              yolo_annotation_folder='images',img_folder='images',manual_verification=False,
