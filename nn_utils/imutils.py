@@ -25,6 +25,8 @@ import inspect
 import string
 import random
 
+import urllib
+
 import constants
 #import background_removal
 #from trendi.paperdoll import neurodoll_falcon_client
@@ -232,7 +234,17 @@ def get_cv2_img_array(url_or_path_to_image_file_or_cv2_image_array, convert_url_
                                       download_directory=download_directory))  # this used to be 'return'
         # put images in local directory
         else:
-            # get remotely if its a url, get locally if not
+            #
+            if '%' in url_or_path_to_image_file_or_cv2_image_array:
+                import sys
+                if sys.version_info[0] < 3:
+                    url_or_path_to_image_file_or_cv2_image_array = urllib.unquote(url_or_path_to_image_file_or_cv2_image_array).decode('utf8')
+                else:
+                    import urllib.parse
+                    url_or_path_to_image_file_or_cv2_image_array = urllib.parse.unquote(url_or_path_to_image_file_or_cv2_image_array)
+
+
+                # get remotely if its a url, get locally if not
             if "://" in url_or_path_to_image_file_or_cv2_image_array:
                 if replace_https_with_http:
                     url_or_path_to_image_file_or_cv2_image_array = url_or_path_to_image_file_or_cv2_image_array.replace(
